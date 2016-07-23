@@ -1,46 +1,70 @@
 #include <iostream>
 #include <fstream>
-#include "vectorclass.cpp"
+//#include "vectorclass.cpp"
 #include <armadillo>
-#define ARMA_64BIT_WORD  //enable use of 64 bit integers (necessary to compile large matrices
+//#define ARMA_64BIT_WORD  //enable use of 64 bit integers (necessary to compile large matrices
 #include <cmath>  //exp()
 
-arma::mat sigmoid(arma::mat z) {
-  z=1/(1+exp(-z));
-  return z;
+#include "logRegSettings.cpp"
+
+arma::mat sigmoid(arma::mat z);
+
+//logistic regression which takes training data as inputs and returns trained parameters as output. Thrid argument, number of iterations of logistic regression is optional. If none if defined, 50 iterations will be executed as a default
+arma::mat log_Regression(arma::mat X, arma::mat y, int numIter = 50) {
+  int m=X.n_rows;
+  int n=X.n_cols;
+  arma::mat theta(n,1);
+  theta.zeros();
+  //declare log-likleyhood, gradient and Hessian; Log likelihood is returned for plotting and debugging purposes
+  arma::mat logLike; //although this is a scalar we need to treat it as a 1-by-1 'matrix to avoid an error
+  arma::mat grad(n,1);
+  arma::mat H(n,n);
+  
+  arma::mat hi;  //approximation of y(i)
+  
+  /*Newton raphson: teta = theta - inv(H)*grad;
+  where H is the Hessian and grad is the gradient.
+  Typically, Newton-Raphson converges after much fewer iterations than batch gradient descent, but each iteration is more costly as it involves inverting an n-by-n Hessian. 
+  Suitable so long as n is not too large.
+  */
+  for (int k=0; k<numIter; k++) {
+    logLike.zeros();
+    H.zeros();
+    grad.zeros();
+    for (int i=0; i<m; i++) {
+      std::cout << "X.rows " << X.n_rows
+            << "\nX.cols " << X.n_cols
+            << "\ntheta.rows " << theta.n_rows
+            << "\ntheta.cols " << theta.n_cols << std::endl;
+ 
+      hi=sigmoid(X.row(i)*theta);
+   
+      //logLike += y.row(i)*log(hi) + (1-y.row(i))*log(1-hi);
+      grad += trans(X.row(i))*(y.row(i)-hi);
+      double dummy_hi = hi(0,0);
+      H -= (dummy_hi*(1-dummy_hi))*(trans(X.row(i))*X.row(i));
+    }
+    return theta -= inv(H)*grad;
+  }
 }
 
 int main() {
+  //initialization 
   arma::mat X_data;
-  X_data.load("q1x.dat");
+  X_data.load(X_dat.c_str());
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
   arma::mat X=join_horiz(icept, X_data);
   arma::mat y;
-  y.load("q1y.dat");
-  int m=X.n_rows;
-  arma::mat h(m,1);
-  h.zeros();
-  arma::mat theta(X.n_cols,1);
-  theta.zeros();
-  int numIter=50;
-  arma::mat l(1,1);
-  arma::mat H(X.n_cols,X.n_cols);
-  arma::mat grad(X.n_cols,1);
-  for (int i=0; i<numIter; ++i) {
-    l.zeros();
-    H.zeros();
-    grad.zeros();
-    for (int j=0; j<m; ++j) {
-      h.row(j)=sigmoid(X.row(j)*theta);
-      l += y.row(j)*log(h.row(j)) + (1-y.row(j))*log(1-h.row(j));
-      arma::mat hh = h.row(j)*(1-h.row(j));
-      double hhh=hh(0,0);
-      H -= hhh*(trans(X.row(j))*X.row(j));
-      grad += trans(X.row(j))*(y.row(j)-h.row(j));
-    }
-    theta -= inv(H)*grad;
-  }
-
+  y.load(y_dat.c_str());
+  //training parameters
+  arma::mat theta = log_Regression(X,y);
+  
   std::cout << theta << std::endl;
+}
+
+
+arma::mat sigmoid(arma::mat z) {
+  z=1/(1+exp(-z));
+  return z;
 }
