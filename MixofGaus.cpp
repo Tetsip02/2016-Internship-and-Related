@@ -4,8 +4,7 @@
 #include <armadillo>
 #include <cmath>  //pow()
 
-
-double PI = 3.14159265359;
+#include "MixofGausSettings.cpp"
 
 double Gauss(int n, arma::mat x, arma::mat mu, arma::mat sigma) {
   arma::mat gmat = exp(-0.5*(x-mu)*inv(sigma)*trans(x-mu))/sqrt(std::pow(2*PI,n)*det(sigma));
@@ -16,13 +15,11 @@ double Gauss(int n, arma::mat x, arma::mat mu, arma::mat sigma) {
 int main() {
 
 arma::mat rawdata;
-rawdata.load("irisDataRevised");
+rawdata.load(data.c_str());
 arma::mat X;
-X=rawdata(arma::span(0,99), arma::span(0,1));
-int m = X.n_rows;
-int n = X.n_cols;
-int nCl = 2;
-int numIter = 25;
+X=rawdata(arma::span(0,numExp-1), arma::span(0,numFeat-1));
+int m = numExp;
+int n = numFeat;
 arma::mat w(m,nCl);
 w.randu();
 arma::mat phy(nCl,1);
