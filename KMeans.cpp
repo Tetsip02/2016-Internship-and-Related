@@ -3,15 +3,15 @@
 #include <fstream>
 #include <armadillo>
 
+#include "KMeansSettings.cpp"
+
 int main() {
 arma::mat rawdata;
-rawdata.load("irisDataRevised");
+rawdata.load(data.c_str());
 arma::mat X;
-X=rawdata(arma::span(0,149), arma::span(0,1));
-int m = X.n_rows;
-int n = X.n_cols;
-int nCl = 3;
-int numIter = 100;
+X=rawdata(arma::span(0, numExp-1), arma::span(0, numFeat-1));
+int m = numExp;
+int n = numFeat;
 arma::mat mu(nCl,n);
 mu.randu();
 
