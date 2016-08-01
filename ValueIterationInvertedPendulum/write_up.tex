@@ -1,0 +1,107 @@
+\documentclass[final,3p,times,twocolumn]{elsarticle}
+%Latex file for inverted pendulum program
+
+
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{amssymb}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Inverted Pendulum on a Cart Problem}
+
+\author{Sergio Azizi}
+
+\begin{abstract}
+Introduction to the problem, MDP's, etc.
+\end{abstract}
+
+\end{frontmatter}
+
+%Main text
+\section{Problem}
+A point-mass m is fixed to the end of a pole of length l and is connected to a cart via a free hinge. The cart is restricted to move in one dimension.
+We want to apply a reinfrocement learning algorithm whose goal it is to balance the pole for as long as possible by accelerating the cart to the left or right direction.
+
+\section{Markov Decision Processes}
+An MDP has five components:\par
+1. A set of states S: This is the set of all possible postions and orientations of our pendulum. We will define each state with:\par
+x-the position along the axis­\par
+theta- the angle of the pole with the vertical\par
+xdot – the velocity of the pendulum\par
+thetadot – its angular velocity\par
+The above variables are are continuous and need to be discretized to be suiatble for our framework. See “Discretization” for specifics.\par
+2. A set of actions:
+Our controler will choose one of two actions, accelerate the car to the right (action 1) or to the left (action 2). For simplicity, there is no “do-nothing” action.\par
+3. set of state transition probabilities:
+This decribes the probability distribution for each state action pair. In other words, when we are at state s and take an action a, the state transtion probability tells us the likelyhood of getting to a next state s’. This set is unknown to us and needs to be estimated from the data (see section on learning a model).\par
+4. A discount factor:
+A real number between 0 and 1, which devalues future rewards.
+The intuition is that to maximise the reward we would like to get positive rewards as soon as possible and postpone negative rewards for as long as possible. We chose 0.995.\par
+5. A reward function:
+in our case, rewards will be a function of the state. In particular, everytime the system fails (i.e. the cart goes out of bounds/the pole falls), a negative reward of -1 is awarded. At every other state we appoint a reward of zero. The algorithm doesn’t know yet which states will most likely lead to negative rewards and should be avoided. But thish information can also be estimated from the data.
+
+\section{Dynamics of our MDP}
+We start at some state s0 (x=0 ,xdot=0, theta=0,thetadot=0). 
+Use the current value function and state transtiotn probability for current stte to compute a policy and choose an action according to that policy.
+Compute the next state s1, by applying the underlying physics of the model.\par
+…
+
+\section{Discretization}
+Value iteration is an algorithm which works well for MDP that have a finite number of states. We will apply the following discretization on our model:\par
+Divide x into three boxes: -2.4 to -1.5; -1.5 to 1.5; 1.5 to 2.4
+Divide Xdot into three boxes: between -0.5 and 0.5, less or above\par
+…\par
+Therefore we will have 3x3x6x3=162 discrete states.
+We will define one additional state that corresponds to failure, resulting in 163 discrete states.
+The function whatstate will map the state (x, xdot…) to an integer between 1 and 163, where the 163th state is associated with failure.
+
+\section{Learning a model}
+In most realisitc apllication, we won’t explicitly be given the state transition probabilities and rewards, and need to estimate them from the data.
+Let’s first talk about the Psa’s:\par
+To start with we can assume Psa to be a uniform distribution over all states In other words, the probability of getting to s’ for any state action pair is 1/|S|.
+We then execute the algorithm until the MDP ends (that is the pendulum failed) for a number of trials, and use the gathered “experience” to derive estimates for the actual state transitioning probabilities:\par
+Psa(s’) = number of times we took action a in state s and got to state s’/number of times we took action a in sate s\par
+If a particular state action pair has not been tried in any of our trials (reulsting in Psa = 0/0), simply hold on to the uniform distribution.
+Similarly, we can estimate the reward to be:\par 
+R(s) = accumulated reward observed in state s/number of times we were in state s.
+
+\section{Training a controller}
+Earlier we showed that our total payoff is given by R(s0) + yR(s1) +….
+The goal of our controller is to compute a policy that over time maximizes the expected value of our payoff E[R(s0) + yR(s1) +….].
+A policy is any function pi that maps a state s to an action a
+We define the value function to be the expected sum of discounted rewards upon starting in state s and taking actions according to pi:\par
+Vpi(s) = E[R(s0) + yR(s1) +….|s0=s,pi]\par
+For a fixed policy this can be rearranged into the bellman equation:\par
+Vpi(s0 = R(s) + y*sum(Pspi(s)(s’)*Vpi(s’)).\par
+The first term is the immediate reward we get, simply from starting in state s. The second term is is the expected sum of future discounted rewards (Pspi(s)(s’)*Vpi(s’)=Es’~pspi(s)[vpi(s’)].
+In a finite-state MDP, we can write down one such equation for Vpi(s) for every states. This results in a set of |S| linear equations with |S| unknowns (ie the value function).
+Now, the goal of our learning algorithm is reduced to finding the value function that maximises Bellmans equation. Lets define this as the optimal value function V*:\par
+V*(s) = maxpi of Vpi(s). (eq1)\par
+We then define the optimal policy pi*(s) to be:\par
+pi*(s) = maxa sumovers’ of (Psa(s’)*V*(s’).(eq2)\par
+One interesting property of pi* is that it’s the optimal policy for all states s (in other words the same policy pi* attains the maximum in eq1 for all states). 
+So we can use pi* and attain the maximum value function , independent of the initial state that we chose for our MDP.\par
+
+Solving a system of 163 linear equations is computanally too expensive, instead we will resort to “value iteration”, a standard reinforcement algorithm which will ‘guess’ the optimal value function and then repeatedly update it using Bellman’s equation. Specifically:\par
+1. For each state s, inititalize V(s) to the value funcion of the previous iteration\par
+2. Repeat until convergence { \par
+for every state s, update V(s) = R(s) + maxa of y*sumovers’ of Psa(s’)*V(s’)\par
+} \par
+Whether the algorithm converges to the correct solution doesn’t depend on how you initialize V in the first step of the algorithm. However, choosing the of the previous iteration instead of, say a vecotr of all zeros, allows for fastest convergence.
+(note: Value iteration only works for finite-state MDP’s)
+
+\section{model blackbox for attaining s'}
+
+\section{putting it together}
+Now let’s construct the framework for solving the inverted pendulum problem:\par
+1. initaliaze the state\par
+2. initialize the state transtioins probabiliteis to be a uniform distribution. Remember, in order to update this parameter later, we need to keep track of the number of times that we went from state s to state s’ through action a.\par
+3. Initialize the rewards at each state to zero and keep track of how often we came across each state.\par
+4. Set the discount factor to  number close to one.
+Repeat until there is no learning left to do \{\par
+1. compute the policy using eq2
+
+
+\end{document}
