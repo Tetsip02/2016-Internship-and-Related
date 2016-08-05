@@ -5,8 +5,9 @@
 --X represents one example in each row and one feature in each column
 --target vector y contains one example in each row
 */
-std::string y_dat = "y_OLS.dat";
-std::string X_dat = "X_OLS.dat";
+//std::string y_dat = "y_OLS.dat";
+//std::string X_dat = "X_OLS.dat";
+std::string dat = "OLS_dataset_BostonHousingData.dat";
 
 const double lambda = 1;
 const double alpha = 0.01;  //learning rate used in batch Gradient descent

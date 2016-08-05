@@ -12,13 +12,16 @@ arma::mat log_Regression(arma::mat X, arma::mat y, int numIter = defaultNumIter)
 
 int main() {
   //initialization 
+  arma::mat data;
+  data.load(dat.c_str());
   arma::mat X_data;
-  X_data.load(X_dat.c_str());
+  arma::mat y;
+  y = data(arma::span(0,99),4);
+  X_data = data(arma::span(0,99),arma::span(0,3));
+  //add intercept:
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
-  arma::mat X=join_horiz(icept, X_data);
-  arma::mat y;
-  y.load(y_dat.c_str());
+  arma::mat X = join_horiz(icept, X_data);
   //training parameters
   arma::mat theta = log_Regression(X,y);
   

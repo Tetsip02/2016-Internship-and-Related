@@ -25,10 +25,14 @@ arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double a
 
 int main() {
   //initiallization
-  arma::mat y;
-  y.load(y_dat.c_str());
+  
+  arma::mat data;
+  data.load(dat.c_str());
   arma::mat X_data;
-  X_data.load(X_dat.c_str());
+  arma::mat y;
+  y = data(arma::span(0,199),13);
+  std::cout << y << std::endl;
+  X_data = data(arma::span(0,199),arma::span(0,12));
   //add X_0=1 to X
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
@@ -36,7 +40,7 @@ int main() {
   //train parameters using the normal equation or batch gradient descent
   arma::mat theta = train_normal(X,y);
   //fit the data and output predictions
-  if (!newDat) {  //if newDat == "True"
+  if (newDat) {  //if newDat == "True"
     arma::mat newX;
     newX.load(newData.c_str());
     arma::mat h = newX*theta;

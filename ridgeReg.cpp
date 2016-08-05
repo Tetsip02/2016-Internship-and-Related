@@ -14,15 +14,17 @@ arma::mat train_batchGradDescent(arma::mat X, arma::mat y);
 
 int main() {
   //initiallization
-  arma::mat y;
-  y.load(y_dat.c_str());
+  arma::mat data;
+  data.load(dat.c_str());
   arma::mat X_data;
-  X_data.load(X_dat.c_str());
+  arma::mat y;
+  y = data(arma::span(0,199),13);
+  std::cout << y << std::endl;
+  X_data = data(arma::span(0,199),arma::span(0,12));
   //add X_0=1 to X
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
   arma::mat X=join_horiz(icept, X_data);
-
   //Training parameters
   arma::mat theta = train_batchGradDescent(X,y);
   std::cout << theta << std::endl;
