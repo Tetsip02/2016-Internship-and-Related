@@ -8,6 +8,7 @@ There are several methods to do this, I have included two: batch gradient descen
 #include <iostream>
 #include <fstream>
 #include <armadillo>
+//documentation for armadillo functions (such as arma::span) can be found at http://arma.sourceforge.net/docs.html
 
 #include "OLSsettings.cpp"
 
@@ -25,21 +26,21 @@ arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double a
 
 int main() {
   //initiallization
-  
+
   arma::mat data;
   data.load(dat.c_str());
   arma::mat X_data;
   arma::mat y;
   y = data(arma::span(0,199),13);
-  std::cout << y << std::endl;
-  X_data = data(arma::span(0,199),arma::span(0,12));
+  //X_data = data(arma::span(0,199),arma::span(0,12));
+  X_data = data(arma::span(0,199),5);
   //add X_0=1 to X
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
   arma::mat X=join_horiz(icept, X_data);
   //train parameters using the normal equation or batch gradient descent
-  arma::mat theta = train_normal(X,y);
-  //fit the data and output predictions
+  arma::mat theta = train_batchGradDescent(X,y,1500,0.01);
+  //fit the data and output predictions (ignore for now)
   if (newDat) {  //if newDat == "True"
     arma::mat newX;
     newX.load(newData.c_str());
@@ -48,6 +49,17 @@ int main() {
     for (int i=0;i<newX.n_rows;i++) {
       ofs_h << h.row(i) << std::endl;
     }
+  }
+  //the below section outputs files which you can use to visualize your results in Ocatve/Matlab/Gnuplot
+  std::ofstream of_theta("theta_OLS.out");
+  std::ofstream of_y("y.out");
+  std::ofstream of_X("X.out");
+  for (int i=0;i<theta.n_rows;i++) {
+    of_theta << theta.row(i) <<std::endl;
+  }
+  for (int i=0;i<y.n_rows;i++) {
+    of_y << y.row(i) << std::endl;
+    of_X << X_data.row(i) << std::endl;
   }
 }
 
@@ -59,7 +71,7 @@ arma::mat train_normal (arma::mat X, arma::mat y) {
 }
 
 arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double alpha) {
-  arma::mat theta(X.n_cols,1); 
+  arma::mat theta(X.n_cols,1);
   int m = X.n_rows;
   for (int i=0; i<numIter; i++) {
     theta -= (alpha/m) * (trans(X)*(X*theta - y));

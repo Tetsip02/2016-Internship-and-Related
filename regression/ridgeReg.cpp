@@ -19,15 +19,14 @@ int main() {
   arma::mat X_data;
   arma::mat y;
   y = data(arma::span(0,199),13);
-  std::cout << y << std::endl;
-  X_data = data(arma::span(0,199),arma::span(0,12));
+  //X_data = data(arma::span(0,199),arma::span(0,12));
+  X_data = data(arma::span(0,199),5);
   //add X_0=1 to X
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
   arma::mat X=join_horiz(icept, X_data);
   //Training parameters
   arma::mat theta = train_batchGradDescent(X,y);
-  std::cout << theta << std::endl;
 
   //fit the data and output predictions
   if (newDat) {  //if newDat == "True"
@@ -38,7 +37,11 @@ int main() {
     for (int i=0;i<newX.n_rows;i++) {
       ofs_h << h.row(i) << std::endl;
     }
-  }  
+  }
+  std::ofstream of_theta("theta_ridgeReg.out");
+  for (int i=0;i<theta.n_rows;i++) {
+    of_theta << theta.row(i) <<std::endl;
+  }
 }
 
 arma::mat train_normal (arma::mat X, arma::mat y) {
@@ -57,10 +60,3 @@ arma::mat train_batchGradDescent(arma::mat X, arma::mat y) {
   }
   return theta;
 }
-
-
-
-
-
-
-
