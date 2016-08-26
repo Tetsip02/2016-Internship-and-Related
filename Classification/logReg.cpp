@@ -11,23 +11,22 @@ arma::mat sigmoid(arma::mat z);
 arma::mat log_Regression(arma::mat X, arma::mat y, int numIter = defaultNumIter);
 
 int main() {
-  //initialization 
+  //initialization
   arma::mat data;
   data.load(dat.c_str());
   arma::mat X_data;
   arma::mat y;
   y = data(arma::span(0,99),4);
-  X_data = data(arma::span(0,99),arma::span(0,3));
+  //X_data = data(arma::span(0,99),arma::span(0,3));
+  X_data = data(arma::span(0,99),arma::span(0,1));
   //add intercept:
   arma::mat icept(X_data.n_rows,1);
   icept.ones();
   arma::mat X = join_horiz(icept, X_data);
   //training parameters
   arma::mat theta = log_Regression(X,y);
-  
-  std::cout << theta << std::endl;
-  
-  //fit the new data and output predictions
+
+  //fit the new data and output predictions(ignore for now)
   if (newDat) {  //if newDat == "True"
     arma::mat newX;
     newX.load(newData.c_str());
@@ -36,6 +35,18 @@ int main() {
     for (int i=0;i<newX.n_rows;i++) {
       ofs_h << h.row(i) << std::endl;
     }
+  }
+  std::ofstream of_theta("theta_logReg.out");
+  std::ofstream of_y("y.out");
+  std::ofstream of_X("X.out");
+  for (int i=0;i<theta.n_rows;i++) {
+    of_theta << theta.row(i) <<std::endl;
+  }
+  for (int i=0;i<y.n_rows;i++) {
+    of_y << y.row(i) << std::endl;
+  }
+  for (int i=0;i<X_data.n_rows;i++) {
+    of_X << X_data.row(i) <<std::endl;
   }
 }
 
@@ -54,19 +65,19 @@ arma::mat log_Regression(arma::mat X, arma::mat y, int numIter) {
   //arma::mat logLike(numIter,1);
   arma::mat grad(n,1);
   arma::mat H(n,n);
-  
+
   arma::mat hi;  //approximation of y(i)
-  
+
   /*Newton raphson: teta = theta - inv(H)*grad;
   where H is the Hessian and grad is the gradient.
-  Typically, Newton-Raphson converges after much fewer iterations than batch gradient descent, but each iteration is more costly as it involves inverting an n-by-n Hessian. 
+  Typically, Newton-Raphson converges after much fewer iterations than batch gradient descent, but each iteration is more costly as it involves inverting an n-by-n Hessian.
   Suitable so long as n is not too large.
   */
   for (int k=0; k<numIter; k++) {
     //logLike.row(k).zeros();
     H.zeros();
     grad.zeros();
-    for (int i=0; i<m; i++) { 
+    for (int i=0; i<m; i++) {
       hi=sigmoid(X.row(i)*theta);
       //logLike.row(k) += y.row(i)*log(hi) + (1-y.row(i))*log(1-hi);
       grad += trans(X.row(i))*(y.row(i)-hi);
