@@ -3,7 +3,7 @@
 
 std::string data = "irisDataRevised";  //in Iris data, 0 is the label for setosa and 1 for versicolor
 int numExp = 100;
-int numFeat = 4;
+int numFeat = 2;
 
 const double PI=3.14159265358979323;
 const double threshold=0.5;
@@ -13,11 +13,6 @@ const double threshold=0.5;
 bool newDat = false;
 std::string newData;
 //newData = "[name-of-data-file]";
-
-
-//compute coeffiecients of decision boundary for LDA
-int plotFeat1 = 0;
-int plotFeat2 = 1;
 
 //LDA or QDA?
 bool LDA = true;

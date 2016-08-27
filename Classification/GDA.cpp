@@ -21,7 +21,7 @@ int main() {
   int n = rawdata.n_cols;
   arma::mat X;
   X=rawdata(arma::span(0,numExp-1), arma::span(0,numFeat-1));
-  
+
   arma::mat y(numExp,1);
   double numZero=0;
   double numOne=0;
@@ -30,7 +30,7 @@ int main() {
     if (rawdata(i,n-1)==0) {++numZero;}
     else {++numOne;}
   }
-  
+
   //fit parameters phy, mu0, mu1
   double phy=numOne/numExp;
   arma::mat mu0(1,numFeat);
@@ -43,7 +43,7 @@ int main() {
   }
   mu0 = mu0/numZero;
   mu1 = mu1/numOne;
-  
+
   arma::mat cov(X.n_cols,X.n_cols);
   arma::mat cov0(X.n_cols,X.n_cols);
   arma::mat cov1(X.n_cols,X.n_cols);
@@ -59,7 +59,7 @@ int main() {
       }
     }
   }
-  
+
   if (!LDA) {
     cov0.zeros();
     cov1.zeros();
@@ -72,8 +72,8 @@ int main() {
       }
     }
   }
-  
-  //fit the new data and output predictions
+
+  //fit the new data and output predictions (ignore for now)
   if (newDat) {  //if newDat == "True"
     arma::mat newX;
     newX.load(newData.c_str());
@@ -95,8 +95,8 @@ int main() {
         h(i,0) = (PXy1*phy)/(PXy0*(1-phy)+PXy1*phy);
         if (h(i,0) > threshold) {h(i,0) = 1;}
       }
-    }    
-    
+    }
+
     std::ofstream ofs_h("GDAHypothesis.out");
     for (int i=0;i<newX.n_rows;i++) {
       ofs_h << h.row(i) << std::endl;
@@ -104,22 +104,23 @@ int main() {
   }
 
 
-    //decision boundary for LDA (y=ax+b). For a pair of classes this can be obtained in the following way:it must pass through the midpoint of their respective means, ie 1/2(mu0+mu1), and be perpendiclar to SIGMA^-1*(mu0-mu1)
-  if (LDA) {
-    arma::mat midpoint(mu0.n_rows, mu0.n_cols);
-    midpoint=0.5*(mu0+mu1);
-    arma::mat decboundgrad(1,2);
-    //at this point, need to specify which two features to plot:
-    arma::mat mu0plot;
-    mu0plot << mu0(0,plotFeat1) << mu0(0,plotFeat2) << arma::endr;
-    arma::mat mu1plot;
-    mu1plot << mu1(0,plotFeat1) << mu1(0,plotFeat2) << arma::endr;
-    arma::mat covplot;
-    covplot << cov(plotFeat1,plotFeat1) << cov(plotFeat1,plotFeat2) << arma::endr << cov(plotFeat2,plotFeat1) << cov(plotFeat2,plotFeat2) << arma::endr;
-    decboundgrad = (mu0plot-mu1plot)*inv(covplot);
-    double a=-decboundgrad(0,1)/decboundgrad(0,0);
-    double b=midpoint(0,plotFeat2)-midpoint(0,plotFeat1)*a;
-    std::cout << "a=" << a << "  " << "b=" << b << std::endl;
+  //create data files to be used for plots:
+  std::ofstream of_X("X_GDA.out");
+  std::ofstream of_y("y_GDA.out");
+  std::ofstream of_phy("phy.out");
+  std::ofstream of_mu0("mu0.out");
+  std::ofstream of_mu1("mu1.out");
+  for (int i=0;i<X.n_rows;i++) {
+    of_X << X.row(i) << std::endl;
+    of_y << y.row(i) << std::endl;
   }
-  
+  of_phy << phy;
+  of_mu0 << mu0.row(0);
+  of_mu1 << mu1.row(0);
+  if (LDA) {
+    std::ofstream of_cov("cov.out");
+    for (int i=0;i<cov.n_rows;i++) {
+      of_cov << cov.row(i) << std::endl;
+    }
+  }
 }
