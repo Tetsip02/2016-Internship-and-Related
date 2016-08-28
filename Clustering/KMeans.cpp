@@ -38,16 +38,28 @@ for (int k=0; k<numIter; k++) {
   //M-Step:
   mu.zeros();
   for (int j=0; j<nCl; j++) {
-    numC=0.00001;
+    numC=0;
     for (int i=0; i<m; i++) {
       if (c(i,0)==j) {
         numC += 1;
         mu.row(j) += X.row(i);
       }
     }
+    if(numC==0) {mu.row(j).zeros();} //no training examples were assigned to this cluster (maybe too many clusters?)
     mu.row(j) = mu.row(j)/numC;
   }
 }
-std::cout << mu << std::endl;
+
+  //output data files to be used for plotting
+  std::ofstream of_X("X_kMeans.out");
+  std::ofstream of_c("c_kMeans.out");
+  std::ofstream of_mu("mu_kMeans.out");
+  for (int i=0;i<X.n_rows;i++) {
+    of_X << X.row(i) << std::endl;
+    of_c << c.row(i) << std::endl;
+  }
+  for (int i=0;i<mu.n_rows;i++) {
+    of_mu << mu.row(i) << std::endl;
+  }
 
 }

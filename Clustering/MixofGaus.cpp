@@ -62,10 +62,19 @@ for (int k=0;k<numIter;k++) {
   }
 }
 
-std::cout << mu << std::endl;
-std::cout << phy << std::endl;
-std::cout << w << std::endl;
+  //output data files to be used for plotting
+  std::ofstream of_X("X_MoG.out");
+  std::ofstream of_mu("mu_MoG.out");
+  std::ofstream of_cov("cov_MoG.out");
+  for (int i=0;i<X.n_rows;i++) {
+    of_X << X.row(i) << std::endl;
+  }
+  for (int i=0;i<mu.n_rows;i++) {
+    of_mu << mu.row(i) << std::endl;
+  }
+  for (int i=0;i<cov.n_slices;i++) {
+    of_cov << cov.slice(i);
+  }
+
 
 }
-
-

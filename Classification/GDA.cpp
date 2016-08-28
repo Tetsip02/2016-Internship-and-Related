@@ -123,4 +123,12 @@ int main() {
       of_cov << cov.row(i) << std::endl;
     }
   }
+  else {
+    std::ofstream of_cov0("cov0.out");
+    std::ofstream of_cov1("cov1.out");
+    for (int i=0;i<cov0.n_rows;i++) {
+      of_cov0 << cov0.row(i) << std::endl;
+      of_cov1 << cov1.row(i) << std::endl;
+    }
+  }
 }
