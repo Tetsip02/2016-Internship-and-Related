@@ -24,3 +24,4 @@ end
 bound_X = min(X_GDA(:,1)):0.01:max(X_GDA(:,1));
 bound_y = a * bound_X + b;
 plot(bound_X,bound_y,'r');
+

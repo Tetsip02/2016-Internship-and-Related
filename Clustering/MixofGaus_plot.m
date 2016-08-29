@@ -32,3 +32,5 @@ for j = 1:nCl
 end
 Z = reshape(Z, size(A));
 contour(A,B,Z);
+figure(2);
+surf(A,B,Z);

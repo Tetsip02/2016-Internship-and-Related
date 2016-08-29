@@ -15,4 +15,4 @@ std::string newData;
 //newData = "[name-of-data-file]";
 
 //LDA or QDA?
-bool LDA = true;
+bool LDA = false;
