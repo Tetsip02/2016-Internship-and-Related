@@ -3,14 +3,14 @@ load('y_GDA.out');
 load('phy.out');
 load('mu0.out');
 load('mu1.out');
-load('cov.out');
+cov = load('cov0.out');
 %decision boundary for LDA (y=ax+b). 
-%For a pair of classes this can be obtained in the following way:
-%it must pass through the midpoint of their respective means, 
-%ie 1/2(mu0+mu1), and be perpendiclar to SIGMA^-1*(mu0-mu1)
+%The line passes through the midpoint of the means.
+%When w is SIGMA^-1*(mu0-mu1) the seperation is maximised (see slides
+%34 to 40)
 midpoint = 0.5 * (mu0 +mu1);
-gradient = (mu0 - mu1) * inv(cov);
-a = -gradient(2) / gradient(1);
+w = (mu0 - mu1) * inv(cov);
+a = -w(2) / w(1);
 b = midpoint(2) - midpoint(1) * a;
 figure;
 hold on;

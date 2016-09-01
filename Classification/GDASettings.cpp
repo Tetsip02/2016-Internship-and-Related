@@ -1,9 +1,9 @@
 //GDA settings file
-//format for training data: each line row represents one training example and each column one feature, except for the last one. last colmn consists of labels
-
-std::string data = "irisDataRevised";  //in Iris data, 0 is the label for setosa and 1 for versicolor
-int numExp = 100;
-int numFeat = 2;
+std::string data = "FisherIris.dat";
+//in FisherIris.dat the first four columns contain the data (one feature per
+//column and one data poin per row). The fifth column contains the labels.
+int numExp = 100; //number of training examples that are read into X
+int numFeat = 2; //number of features that are read into X
 
 const double PI=3.14159265358979323;
 const double threshold=0.5;
