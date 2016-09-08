@@ -8,7 +8,7 @@ There are several methods to do this, I have included two: batch gradient descen
 #include <iostream>
 #include <fstream>
 #include <armadillo> //documenatation available at http://arma.sourceforge.net/docs.html
-#include <iomanip>
+#include <iomanip> //setw()
 
 /*Normal equation
 Disadvantage: need to compute the inverse X^T*X which computationally very expensive if n is large
@@ -17,24 +17,11 @@ Advantage: no need to choose a learning rate
 arma::mat train_normal (arma::mat X, arma::mat y);
 
 /*Batch Gradient descent
-Disadvantage:need to choosing a learning rate alpha that is sufficiently small to make sure the algorithm converges with each iteration, but large enough to save the number of iterations needed. With this data, alpha=0.01 and numIter=1500 works well.
+Disadvantage:need to choosing a learning rate alpha that is sufficiently small to make sure the algorithm converges with each iteration, but large enough to save the number of iterations needed. This varies depending on degree.
 Advantage: works well even when n is large
 */
 arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double alpha);
 
-
-// /*construct design matrix, maps features X1 and X2 into all polynomial terms up to degree power*/
-// arma::mat getDesignMat(arma::mat feat1,arma::mat feat2, int degree) {
-//   arma::mat designmat;
-//   arma::mat temp;
-//   for(int i=0;i<degree;i++) {
-//     for (int j=0;j<i;j++) {
-//       temp = (feat1.^(i-j)).*(feat2.^j);
-//       designmat = arma::join::horix(designmat,temp);
-//     }
-//   }
-//   return designmat;
-// }
 
 int main() {
 
@@ -50,42 +37,42 @@ int main() {
   noise = s*noise;
   arma::mat y = arma::sin(x) + noise;
 
-  //add X_0=1 to X
-  arma::mat icept(x.n_rows,1);
-  icept.ones();
-  //arma::mat X=join_horiz(icept, x);
-  arma::mat X = icept;
-  //add polynomial features
-  int degree = 2;
+  /*get polynomial features and store new design matrix in X*/
+  int degree = 5;
+  arma::mat X;
   arma::mat temp;
-  for (int i=1;i<=degree;i++) {
+  for (int i=0;i<=degree;i++) {
     temp = arma::pow(x,i);
     X = arma::join_horiz(X,temp);
   }
-  std::cout << X;
-
 
   //train parameters using the normal equation or batch gradient descent
-  arma::mat theta = train_batchGradDescent(X,y,1500,0.01);
-
+  //arma::mat theta = train_batchGradDescent(X,y,1500,0.005);
+  arma::mat theta = train_normal(X,y);
 
   /*Gnuplot*/
   std::ofstream of_dat("OLSsin.dat");
   for(int i=0;i<x.n_rows;i++) {
     of_dat << std::setw(12) << x(i,0) << " " << std::setw(12) << y(i,0) << std::endl;
   }
+
   std::ofstream of_OLSsin("OLSsin.gnu");
   of_OLSsin << "reset" << std::endl;
   of_OLSsin << "set terminal png" << std::endl;
   of_OLSsin << "set output 'OLSsin.png'" << std::endl;
   of_OLSsin << std::endl;
-  of_OLSsin << "theta1 = " << theta(0,0) << std::endl;
-  of_OLSsin << "theta2 = " << theta(1,0) << std::endl;
+  for (int i=0;i<theta.n_rows;i++) {
+    of_OLSsin << "theta" << i << " = " << theta(i,0) << std::endl;
+  }
   of_OLSsin << std::endl;
   of_OLSsin << "set xlabel 'x'" << std::endl;
   of_OLSsin << "set ylabel 'y(x)'" << std::endl;
   of_OLSsin << std::endl;
-  of_OLSsin << "y(x) = theta2*x + theta1" << std::endl;
+  of_OLSsin << "y(x) = ";
+  for (int i=0;i<theta.n_rows;i++) {
+    of_OLSsin << "theta" << i << "*" << "x**" << i << " + ";
+  }
+  of_OLSsin << "0" << std::endl;
   of_OLSsin << "plot 'OLSsin.dat' using 1:2 notitle, [0:6] y(x) title 'model'" << std::endl;
 
 }
