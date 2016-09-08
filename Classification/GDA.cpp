@@ -107,10 +107,6 @@ try {
   //bring line into form X2 = p * X1 + q:
   double p = -w(0,1)/w(0,0);
   double q = mid(0,1) - mid(0,0) * p;
-  std::ofstream of_p("p.out");
-  std::ofstream of_q("q.out");
-  of_p << p;
-  of_q << q;
 
   //copy gnuplot script into LDA_gnuplot.gnu:
   std::ofstream of_LDAgnu("LDA_plot.gnu");
@@ -133,16 +129,6 @@ try {
   arma::mat C = log((1-phy)/phy) - 0.5*log(det(cov0)/det(cov1))
               - 0.5*((mu0*inv(cov0)*trans(mu0))-(mu1*inv(cov1)*trans(mu1)));
 
-  /*files for QDA_plot1.gnu*/
-  //Solve X^T*A*X + X^T*B + C = 0 using the quadratic formula
-  std::ofstream of_A("A.out");
-  std::ofstream of_B("B.out");
-  std::ofstream of_C("C.out");
-  for (int i=0;i<A.n_rows;i++) {
-    of_A << A.row(i);
-  }
-  of_B << B;
-  of_C << C;
 
   std::ofstream of_QDA1gnu("QDA_plot1.gnu");
   of_QDA1gnu << "reset" << std::endl;
