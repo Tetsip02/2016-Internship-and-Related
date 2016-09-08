@@ -1,8 +1,9 @@
-//Linear/Quadratic Discriminant Analysis for two classes
+//Fisher Linear/Quadratic Discriminant Analysis for two classes
 #include <iostream> // cin,cout
 #include <fstream> //ifstream,ofstream
-#include <armadillo>
-#include <cmath>  // exp()
+#include <armadillo> //documenatation available at http://arma.sourceforge.net/docs.html
+#include <cmath>  // exp(), log()
+#include <stdio.h> //fprintf
 
 #include "GDASettings.cpp"
 
@@ -13,28 +14,42 @@ double Gauss(int n, arma::mat x, arma::mat mu, arma::mat sigma) {
   return g;
 }
 
-
-int main() {
+int main()
+try {
   /*initialization*/
-  //Don't modify lines 22 to 26. To change the data set, number of
-  //training examples or features, go to GDASettings.cpp and change the
-  //variables data (dataset), numExp (training examples) or numFeat (features)
-  //Notice thst we start counting from zero.
+  //To change the training set, modify GDASettings.cpp.
+  //If you don't want to use all 50 data points of each species
+  //for training, adjust lines 27 to 29.
+  //Note that we start counting from zero.
   arma::mat rawdata;
   rawdata.load(data.c_str()); //load data (that is FisherIris.dat) into rawdata.
+  arma::mat X_dummy;
   arma::mat X;
-  X=rawdata(arma::span(0,numExp-1), arma::span(0,numFeat-1));
-
-  /*Read the fifth column of FisherIris.dat (ie. the labels) into y*/
-  //numZero and numOne are counters that keep track of the number of
-  //examples from each class
+  if(Setosa) {X_dummy = arma::join_vert(X_dummy,rawdata(arma::span(0,49),arma::span(0,4)));}
+  if(Versicolor) {X_dummy = arma::join_vert(X_dummy,rawdata(arma::span(50,99),arma::span(0,4)));}
+  if(Virginica) {X_dummy = arma::join_vert(X_dummy,rawdata(arma::span(100,149),arma::span(0,4)));}
+  int numExp = X_dummy.n_rows; //number of training examples
+  if(numExp != 100) {throw 1;}
+  if(SepalLength) {X = arma::join_horiz(X,X_dummy.col(0));}
+  if(SepalWidth) {X = arma::join_horiz(X,X_dummy.col(1));}
+  if(PetalLength) {X = arma::join_horiz(X,X_dummy.col(2));}
+  if(PetalWidth) {X = arma::join_horiz(X,X_dummy.col(3));}
+  int numFeat = X.n_cols; //number of features used for training
+  /*Create label vector y of zeros and ones from the fifth column of X_dummy*/
+  //numZero and numOne are counters that keep track of the number of examples from each class
   arma::mat y(numExp,1);
   double numZero=0;
   double numOne=0;
+  double check = X_dummy(0,4);
   for (int i=0;i<numExp;i++) {
-    y(i,0) = rawdata(i,rawdata.n_cols-1);
-    if (rawdata(i,rawdata.n_cols-1)==0) {++numZero;}
-    else {++numOne;}
+    if(X_dummy(i,4)==check) {
+      y(i,0) = 0;
+      ++numZero;
+    }
+    else {
+      y(i,0) = 1;
+      ++numOne;
+    }
   }
 
   /*fit parameters phy, mu0, mu1*/
@@ -66,27 +81,92 @@ int main() {
   cov0 = cov0/numExp;
   cov1 = cov1/numExp;
 
-  /*Read X,y and the parameters into files to be used for plotting*/
-  std::ofstream of_X("X_GDA.out");
-  std::ofstream of_y("y_GDA.out");
-  std::ofstream of_phy("phy.out");
-  std::ofstream of_mu0("mu0.out");
-  std::ofstream of_mu1("mu1.out");
-  std::ofstream of_cov0("cov0.out");
-  std::ofstream of_cov1("cov1.out");
-  for (int i=0;i<X.n_rows;i++) {
-    of_X << X.row(i) << std::endl;
-    of_y << y.row(i) << std::endl;
+  /*plotting files, ONLY for two features*/
+  if (numFeat!=2) {throw 'a';}
+  //data
+  std::ofstream of_C1("Class0.out"); //training examples belonging to first class
+  std::ofstream of_C2("Class1.out"); //training examples belonging to second class
+  for (int i=0;i<y.n_rows;i++) {
+    if (y(i,0)==0) {
+      of_C1 << X.row(i) << std::endl;
+    }
+    else {
+      of_C2 << X.row(i) << std::endl;
+    }
   }
-  of_phy << phy;
-  of_mu0 << mu0.row(0);
-  of_mu1 << mu1.row(0);
-  for (int i=0;i<cov0.n_rows;i++) {
-    of_cov0 << cov0.row(i) << std::endl;
-    of_cov1 << cov1.row(i) << std::endl;
-  }
+  //LDA projection line
+  arma::mat mid; //midpoint between means
+  mid = 0.5 * (mu0+mu1);
+  arma::mat w; //direction of line of projection
+  w = (mu0 - mu1) * inv(cov0);
+  //bring line into form X2 = p * X1 + q:
+  double p = -w(0,1)/w(0,0);
+  double q = mid(0,1) - mid(0,0) * p;
+  std::ofstream of_p("p.out");
+  std::ofstream of_q("q.out");
+  of_p << p;
+  of_q << q;
+  //QDA
+  //Decision boundary is a parabola in the form X^T*A*X + X^T*B + C = Z, at Z=0
+  arma::mat A = -0.5*(inv(cov0)-inv(cov1));
+  arma::mat B = (mu0*inv(cov0)) - (mu1*inv(cov1));
+  arma::mat C = log((1-phy)/phy) - 0.5*log(det(cov0)/det(cov1))
+              - 0.5*((mu0*inv(cov0)*trans(mu0))-(mu1*inv(cov1)*trans(mu1)));
 
-//You can now move on to the file LDA_plot.m to plot the results
+  /*files for QDA_gnuplot_test.gnu*/
+  std::ofstream of_A("A.out");
+  std::ofstream of_B("B.out");
+  std::ofstream of_C("C.out");
+  for (int i=0;i<A.n_rows;i++) {
+    of_A << A.row(i);
+  }
+  of_B << B;
+  of_C << C;
+
+  /*
+  arma::vec a = arma::linspace(min(X.col(0)),max(X.col(0))); //a is a vector of length 100
+  arma::vec b = arma::linspace(min(X.col(1)),max(X.col(1)));
+  //create meshgrid
+  arma::mat a_grid(a.n_rows,a.n_rows); //a_grid is a 100 by 100 square matrix
+  arma::mat b_grid(a.n_rows,a.n_rows);
+  for (int i=0;i<a.n_rows;i++) {
+    for (int j=0;j<a.n_rows;j++) {
+      a_grid(j,i) = a(i,0);
+      b_grid(i,j) = b(i,0);
+    }
+  }
+  //evaluate Z at each point in the grid
+  arma::mat a_grid_vec; //a_grid_vec is a vector of length 10000
+  arma::mat b_grid_vec;
+  a_grid_vec = arma::vectorise(a_grid);
+  b_grid_vec = arma::vectorise(b_grid);
+  arma::mat ab;
+  ab = arma::join_horiz(a_grid_vec,b_grid_vec);
+  arma::mat Z(ab.n_rows,1);
+  for(int i=0;i<Z.n_rows;i++) {
+    Z.row(i) = ab.row(i)*A*trans(ab.row(i)) + B*trans(ab.row(i)) + C;
+  }
+  //extract values where Z is close to zero
+  arma::mat Z_zero;
+  for (int i=0;i<Z.n_rows;i++) {
+    if (Z(i,0)<0.25 && Z(i,0)>-0.25) {
+      Z_zero = join_vert(Z_zero,ab.row(i));
+    }
+  }
+  //read Z_zero into a file
+  std::ofstream of_Zzero("QDA_dat.out");
+  for (int i=0;i<Z_zero.n_rows;i++) {
+    of_Zzero << Z_zero.row(i);
+  }
+  */
+
+  // arma::mat QDA_dat;
+  // QDA_dat = arma::join_horiz(ab,Z);
+  // std::ofstream of_QDA_dat("QDA_dat.out");
+  // for (int i=0;i<QDA_dat.n_rows;i++) {
+  //   of_QDA_dat << QDA_dat.row(i);
+  // }
+
 
   /*use parameters to predict new data*/
   /*
@@ -134,3 +214,28 @@ int main() {
     }
   }
 }
+catch (const int& error1) {
+  std::cerr << "You can only classify two classes at a time" << std::endl;
+}
+catch (const char& error2) {
+  std::cerr << "Code allows for only two features to be plotted at a time" << std::endl;
+}
+
+/*
+//gnuplot file for LDA
+FILE *LDA_gnuplotPipe = popen("gnuplot -persist", "w");
+//if (LDA_gnuplotPipe) {
+  fprintf(LDA_gnuplotPipe, "reset\n");
+  fprintf(LDA_gnuplotPipe, "set terminal png\n");
+  fprintf(LDA_gnuplotPipe, "set output 'LDA_plot_pipe.png'\n");
+  fprintf(LDA_gnuplotPipe, "p=0.869\n");
+  fprintf(LDA_gnuplotPipe, "q=-1.66\n");
+  fprintf(LDA_gnuplotPipe, "y(x) = p * x + q\n");
+  fprintf(LDA_gnuplotPipe, "set xlabel 'Feature 1'\n");
+  fprintf(LDA_gnuplotPipe, "set ylabel 'Feature 2'\n");
+  fprintf(LDA_gnuplotPipe, "plot y(x) title 'decision boundary', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'\n");
+  fflush(gnuplotPipe);
+  fprintf(gnuplotPipe,"exit \n");
+  pclose(gnuplotPipe);
+//}
+*/

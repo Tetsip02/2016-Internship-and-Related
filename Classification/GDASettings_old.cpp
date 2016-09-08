@@ -6,18 +6,8 @@ std::string data = "FisherIris.dat";
 //Rows 51 to 100 belong to versicolor class
 //Last 50 rows belong to Virginica class
 
-//Plotting only available for two features
-
-//Set the boolean value of the part of the data that should be used for training to true
-
-bool Setosa = true;
-bool Versicolor = true;
-bool Virginica = false;
-
-bool SepalLength = true;
-bool SepalWidth = true;
-bool PetalLength = false;
-bool PetalWidth = false;
+int numExp = 100; //number of training examples that are read into X
+int numFeat = 2; //number of features that are read into X
 
 const double PI=3.14159265358979323;
 const double threshold=0.5;
@@ -29,4 +19,4 @@ std::string newData;
 //newData = "[name-of-data-file]";
 
 //LDA or QDA?
-bool LDA = true;
+bool LDA = false;
