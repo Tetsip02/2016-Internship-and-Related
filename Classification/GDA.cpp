@@ -117,15 +117,14 @@ try {
   of_LDAgnu << "reset" << std::endl;
   of_LDAgnu << "set terminal png" << std::endl;
   of_LDAgnu << "set output 'LDA_plot.png'" << std::endl;
-  of_LDAgnu << "#load first row first column of p.out into p" << std::endl;
-  of_LDAgnu << "p = system(\"head -n1 p.out | awk '{print $1}'\")" << std::endl;
-  of_LDAgnu << "q = system(\"head -n1 q.out | awk '{print $1}'\")" << std::endl;
+  of_LDAgnu << "p = " << p << std::endl;
+  of_LDAgnu << "q = " << q << std::endl;
   of_LDAgnu << "y(x) = p * x + q" << std::endl;
   of_LDAgnu << std::endl;
   of_LDAgnu << "set xlabel 'Feature 1'" << std::endl;
   of_LDAgnu << "set ylabel 'Feature 2'" << std::endl;
   of_LDAgnu << std::endl;
-  of_LDAgnu << "plot y(x) title 'decision boundary', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
+  of_LDAgnu << "plot y(x) title 'LDA decision boundary', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
 
   //QDA
   //Decision boundary is a parabola in the form X^T*A*X + X^T*B + C = Z, at Z=0
@@ -147,17 +146,21 @@ try {
 
   std::ofstream of_QDA1gnu("QDA_plot1.gnu");
   of_QDA1gnu << "reset" << std::endl;
-  of_QDA1gnu << "#read in A,B and C" << std::endl;
-  of_QDA1gnu << "plot 'A.out' every ::0::0 using (A11 = $1, A12 = $2), 'A.out' every ::1::1 using (A21 = $1, A22 = $2), 'B.out' using (b1 = $1, b2 = $2), 'C.out' using (c = $1)" << std::endl;
-  of_QDA1gnu << std::endl;
+
   of_QDA1gnu << "set terminal png" << std::endl;
   of_QDA1gnu << "set output 'QDA_plot.png'" << std::endl;
+  of_QDA1gnu << "A11 =" << A(0, 0) << std::endl;
+  of_QDA1gnu << "A12 =" << A(0, 1) << std::endl;
+  of_QDA1gnu << "A21 =" << A(1, 0) << std::endl;
+  of_QDA1gnu << "A22 =" << A(1, 1) << std::endl;
+  of_QDA1gnu << "b1 =" << B(0, 0) << std::endl;
+  of_QDA1gnu << "b2 =" << B(0, 1) << std::endl;
+  of_QDA1gnu << "c =" << C << std::endl;
   of_QDA1gnu << std::endl;
   of_QDA1gnu << "set xlabel 'Feature 1'" << std::endl;
   of_QDA1gnu << "set ylabel 'Feature 2'" << std::endl;
   of_QDA1gnu << std::endl;
-  of_QDA1gnu << "plot (-(((A12+A21) * x) + b2) + sqrt(((A12+A21) + b2)**2 - 4 * A22 * (A11*(x**2) + b1*x + c)))/(2*A22) title 'boundary1', (-((A12+A21)*x+b2) - sqrt(((A12+A21)+b2)**2-4*A22*(A11*x**2 + b1*x +c)))/(2*A22) title 'boundary2', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
-  //when you run >'gnuplot QDA_plot1.gnu' you'll get an error message because the plot function was used to read in the data for which no terminal was defined (since we don't want a plot). So you can safely ignore the error message
+  of_QDA1gnu << "plot (-(((A12+A21) * x) + b2) + sqrt(((A12+A21)*x + b2)**2 - 4 * A22 * (A11*(x**2) + b1*x + c)))/(2*A22) title 'boundary1', (-((A12+A21)*x+b2) - sqrt(((A12+A21)*x+b2)**2-4*A22*(A11*x**2 + b1*x +c)))/(2*A22) title 'boundary2', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
 
 
   //for QDA_plot2.gnu
