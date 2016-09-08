@@ -7,10 +7,8 @@ There are several methods to do this, I have included two: batch gradient descen
 */
 #include <iostream>
 #include <fstream>
-#include <armadillo>
-//documentation for armadillo functions (such as arma::span) can be found at http://arma.sourceforge.net/docs.html
-
-#include "OLSsettings.cpp"
+#include <armadillo> //documenatation available at http://arma.sourceforge.net/docs.html
+#include <iomanip>
 
 /*Normal equation
 Disadvantage: need to compute the inverse X^T*X which computationally very expensive if n is large
@@ -24,43 +22,72 @@ Advantage: works well even when n is large
 */
 arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double alpha);
 
-int main() {
-  //initiallization
 
-  arma::mat data;
-  data.load(dat.c_str());
-  arma::mat X_data;
-  arma::mat y;
-  y = data(arma::span(0,199),13);
-  //X_data = data(arma::span(0,199),arma::span(0,12));
-  X_data = data(arma::span(0,199),5);
+// /*construct design matrix, maps features X1 and X2 into all polynomial terms up to degree power*/
+// arma::mat getDesignMat(arma::mat feat1,arma::mat feat2, int degree) {
+//   arma::mat designmat;
+//   arma::mat temp;
+//   for(int i=0;i<degree;i++) {
+//     for (int j=0;j<i;j++) {
+//       temp = (feat1.^(i-j)).*(feat2.^j);
+//       designmat = arma::join::horix(designmat,temp);
+//     }
+//   }
+//   return designmat;
+// }
+
+int main() {
+
+  /*Generating data*/
+  /*
+  x is a vector of length 30 with elements which are uniformly distributed between 0 and 6
+  y = sin(x) + noise, where noise is a random number taken from a normal distribution with mean 0,variance 1
+  */
+  arma::mat x = arma::randu(30,1);
+  x = 6*x;
+  double s = 0.1; //standard deviation
+  arma::mat noise = arma::randn(30,1);
+  noise = s*noise;
+  arma::mat y = arma::sin(x) + noise;
+
   //add X_0=1 to X
-  arma::mat icept(X_data.n_rows,1);
+  arma::mat icept(x.n_rows,1);
   icept.ones();
-  arma::mat X=join_horiz(icept, X_data);
+  //arma::mat X=join_horiz(icept, x);
+  arma::mat X = icept;
+  //add polynomial features
+  int degree = 2;
+  arma::mat temp;
+  for (int i=1;i<=degree;i++) {
+    temp = arma::pow(x,i);
+    X = arma::join_horiz(X,temp);
+  }
+  std::cout << X;
+
+
   //train parameters using the normal equation or batch gradient descent
   arma::mat theta = train_batchGradDescent(X,y,1500,0.01);
-  //fit the data and output predictions (ignore for now)
-  if (newDat) {  //if newDat == "True"
-    arma::mat newX;
-    newX.load(newData.c_str());
-    arma::mat h = newX*theta;
-    std::ofstream ofs_h("linRegHypothesis.out");
-    for (int i=0;i<newX.n_rows;i++) {
-      ofs_h << h.row(i) << std::endl;
-    }
+
+
+  /*Gnuplot*/
+  std::ofstream of_dat("OLSsin.dat");
+  for(int i=0;i<x.n_rows;i++) {
+    of_dat << std::setw(12) << x(i,0) << " " << std::setw(12) << y(i,0) << std::endl;
   }
-  //the below section outputs files which you can use to visualize your results in Ocatve/Matlab/Gnuplot
-  std::ofstream of_theta("theta_OLS.out");
-  std::ofstream of_y("y.out");
-  std::ofstream of_X("X.out");
-  for (int i=0;i<theta.n_rows;i++) {
-    of_theta << theta.row(i) <<std::endl;
-  }
-  for (int i=0;i<y.n_rows;i++) {
-    of_y << y.row(i) << std::endl;
-    of_X << X_data.row(i) << std::endl;
-  }
+  std::ofstream of_OLSsin("OLSsin.gnu");
+  of_OLSsin << "reset" << std::endl;
+  of_OLSsin << "set terminal png" << std::endl;
+  of_OLSsin << "set output 'OLSsin.png'" << std::endl;
+  of_OLSsin << std::endl;
+  of_OLSsin << "theta1 = " << theta(0,0) << std::endl;
+  of_OLSsin << "theta2 = " << theta(1,0) << std::endl;
+  of_OLSsin << std::endl;
+  of_OLSsin << "set xlabel 'x'" << std::endl;
+  of_OLSsin << "set ylabel 'y(x)'" << std::endl;
+  of_OLSsin << std::endl;
+  of_OLSsin << "y(x) = theta2*x + theta1" << std::endl;
+  of_OLSsin << "plot 'OLSsin.dat' using 1:2 notitle, [0:6] y(x) title 'model'" << std::endl;
+
 }
 
 arma::mat train_normal (arma::mat X, arma::mat y) {
