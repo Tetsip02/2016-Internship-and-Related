@@ -2,8 +2,12 @@
 #include <iostream> // cin,cout
 #include <fstream> //ifstream,ofstream
 #include <armadillo> //documenatation available at http://arma.sourceforge.net/docs.html
+//append -larmadillo to compile
 #include <cmath>  // exp(), log()
-#include <stdio.h> //fprintf
+
+//#include <boost/tuple/tuple.hpp>
+//#include "../include/gnuplot-iostream/gnuplot-iostream.h"
+//append -lboost_iostreams -lboost_system -lboost_filesystem to compile
 
 #include "GDASettings.cpp"
 
@@ -94,6 +98,7 @@ try {
       of_C2 << X.row(i) << std::endl;
     }
   }
+
   //LDA projection line
   arma::mat mid; //midpoint between means
   mid = 0.5 * (mu0+mu1);
@@ -106,6 +111,22 @@ try {
   std::ofstream of_q("q.out");
   of_p << p;
   of_q << q;
+
+  //copy gnuplot script into LDA_gnuplot.gnu:
+  std::ofstream of_LDAgnu("LDA_plot.gnu");
+  of_LDAgnu << "reset" << std::endl;
+  of_LDAgnu << "set terminal png" << std::endl;
+  of_LDAgnu << "set output 'LDA_plot.png'" << std::endl;
+  of_LDAgnu << "#load first row first column of p.out into p" << std::endl;
+  of_LDAgnu << "p = system(\"head -n1 p.out | awk '{print $1}'\")" << std::endl;
+  of_LDAgnu << "q = system(\"head -n1 q.out | awk '{print $1}'\")" << std::endl;
+  of_LDAgnu << "y(x) = p * x + q" << std::endl;
+  of_LDAgnu << std::endl;
+  of_LDAgnu << "set xlabel 'Feature 1'" << std::endl;
+  of_LDAgnu << "set ylabel 'Feature 2'" << std::endl;
+  of_LDAgnu << std::endl;
+  of_LDAgnu << "plot y(x) title 'decision boundary', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
+
   //QDA
   //Decision boundary is a parabola in the form X^T*A*X + X^T*B + C = Z, at Z=0
   arma::mat A = -0.5*(inv(cov0)-inv(cov1));
@@ -113,7 +134,8 @@ try {
   arma::mat C = log((1-phy)/phy) - 0.5*log(det(cov0)/det(cov1))
               - 0.5*((mu0*inv(cov0)*trans(mu0))-(mu1*inv(cov1)*trans(mu1)));
 
-  /*files for QDA_gnuplot_test.gnu*/
+  /*files for QDA_plot1.gnu*/
+  //Solve X^T*A*X + X^T*B + C = 0 using the quadratic formula
   std::ofstream of_A("A.out");
   std::ofstream of_B("B.out");
   std::ofstream of_C("C.out");
@@ -123,7 +145,23 @@ try {
   of_B << B;
   of_C << C;
 
-  /*
+  std::ofstream of_QDA1gnu("QDA_plot1.gnu");
+  of_QDA1gnu << "reset" << std::endl;
+  of_QDA1gnu << "#read in A,B and C" << std::endl;
+  of_QDA1gnu << "plot 'A.out' every ::0::0 using (A11 = $1, A12 = $2), 'A.out' every ::1::1 using (A21 = $1, A22 = $2), 'B.out' using (b1 = $1, b2 = $2), 'C.out' using (c = $1)" << std::endl;
+  of_QDA1gnu << std::endl;
+  of_QDA1gnu << "set terminal png" << std::endl;
+  of_QDA1gnu << "set output 'QDA_plot.png'" << std::endl;
+  of_QDA1gnu << std::endl;
+  of_QDA1gnu << "set xlabel 'Feature 1'" << std::endl;
+  of_QDA1gnu << "set ylabel 'Feature 2'" << std::endl;
+  of_QDA1gnu << std::endl;
+  of_QDA1gnu << "plot (-(((A12+A21) * x) + b2) + sqrt(((A12+A21) + b2)**2 - 4 * A22 * (A11*(x**2) + b1*x + c)))/(2*A22) title 'boundary1', (-((A12+A21)*x+b2) - sqrt(((A12+A21)+b2)**2-4*A22*(A11*x**2 + b1*x +c)))/(2*A22) title 'boundary2', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
+  //when you run >'gnuplot QDA_plot1.gnu' you'll get an error message because the plot function was used to read in the data for which no terminal was defined (since we don't want a plot). So you can safely ignore the error message
+
+
+  //for QDA_plot2.gnu
+  //evaluate Z = X^T*A*X + X^T*B + C and save x,y coordinates where Z=0
   arma::vec a = arma::linspace(min(X.col(0)),max(X.col(0))); //a is a vector of length 100
   arma::vec b = arma::linspace(min(X.col(1)),max(X.col(1)));
   //create meshgrid
@@ -158,14 +196,16 @@ try {
   for (int i=0;i<Z_zero.n_rows;i++) {
     of_Zzero << Z_zero.row(i);
   }
-  */
 
-  // arma::mat QDA_dat;
-  // QDA_dat = arma::join_horiz(ab,Z);
-  // std::ofstream of_QDA_dat("QDA_dat.out");
-  // for (int i=0;i<QDA_dat.n_rows;i++) {
-  //   of_QDA_dat << QDA_dat.row(i);
-  // }
+  std::ofstream of_QDA2gnu("QDA_plot2.gnu");
+  of_QDA2gnu << "reset" << std::endl;
+  of_QDA2gnu << "set terminal png" << std::endl;
+  of_QDA2gnu << "set output 'QDA_plot.png'" << std::endl;
+  of_QDA2gnu << std::endl;
+  of_QDA2gnu << "set xlabel 'Feature 1'" << std::endl;
+  of_QDA2gnu << "set ylabel 'Feature 2'" << std::endl;
+  of_QDA2gnu << std::endl;
+  of_QDA2gnu << "plot 'QDA_dat.out' with lines title 'decision boundary', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'" << std::endl;
 
 
   /*use parameters to predict new data*/
@@ -220,22 +260,3 @@ catch (const int& error1) {
 catch (const char& error2) {
   std::cerr << "Code allows for only two features to be plotted at a time" << std::endl;
 }
-
-/*
-//gnuplot file for LDA
-FILE *LDA_gnuplotPipe = popen("gnuplot -persist", "w");
-//if (LDA_gnuplotPipe) {
-  fprintf(LDA_gnuplotPipe, "reset\n");
-  fprintf(LDA_gnuplotPipe, "set terminal png\n");
-  fprintf(LDA_gnuplotPipe, "set output 'LDA_plot_pipe.png'\n");
-  fprintf(LDA_gnuplotPipe, "p=0.869\n");
-  fprintf(LDA_gnuplotPipe, "q=-1.66\n");
-  fprintf(LDA_gnuplotPipe, "y(x) = p * x + q\n");
-  fprintf(LDA_gnuplotPipe, "set xlabel 'Feature 1'\n");
-  fprintf(LDA_gnuplotPipe, "set ylabel 'Feature 2'\n");
-  fprintf(LDA_gnuplotPipe, "plot y(x) title 'decision boundary', 'Class0.out' title 'Species 1', 'Class1.out' title 'Species 2'\n");
-  fflush(gnuplotPipe);
-  fprintf(gnuplotPipe,"exit \n");
-  pclose(gnuplotPipe);
-//}
-*/
