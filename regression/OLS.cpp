@@ -20,7 +20,20 @@ arma::mat train_normal (arma::mat X, arma::mat y);
 Disadvantage:need to choosing a learning rate alpha that is sufficiently small to make sure the algorithm converges with each iteration, but large enough to save the number of iterations needed. This varies depending on degree.
 Advantage: works well even when n is large
 */
-arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double alpha);
+arma::mat train_batchGradDescent(arma::mat X, arma::mat y);
+
+/*ridge regression*/
+/*
+OLS with a penalty term on the l2-norm to prevent overfitting cost function J = 0.5*||h-y||^2 + 0.5*lambda*theta^2
+*/
+arma::mat ridge_train_normal (arma::mat X, arma::mat y);
+
+arma::mat ridge_train_batchGradDescent(arma::mat X, arma::mat y);
+
+
+const double lambda = 1;
+const double alpha = 0.00001;  //learning rate used in batch Gradient descent
+const int numIter = 150000;  //iterations for batch gradient descent
 
 
 int main() {
@@ -30,15 +43,16 @@ int main() {
   x is a vector of length 30 with elements which are uniformly distributed between 0 and 6
   y = sin(x) + noise, where noise is a random number taken from a normal distribution with mean 0,variance 1
   */
-  arma::mat x = arma::randu(30,1);
-  x = 6*x;
+  int n = 30;
+  arma::mat x = arma::randu(n,1);
+  x = 6*x; //set range of x to 0:6
   double s = 0.1; //standard deviation
-  arma::mat noise = arma::randn(30,1);
+  arma::mat noise = arma::randn(n,1);
   noise = s*noise;
   arma::mat y = arma::sin(x) + noise;
 
   /*get polynomial features and store new design matrix in X*/
-  int degree = 5;
+  int degree = 4;
   arma::mat X;
   arma::mat temp;
   for (int i=0;i<=degree;i++) {
@@ -46,9 +60,9 @@ int main() {
     X = arma::join_horiz(X,temp);
   }
 
-  //train parameters using the normal equation or batch gradient descent
-  //arma::mat theta = train_batchGradDescent(X,y,1500,0.005);
-  arma::mat theta = train_normal(X,y);
+
+  arma::mat theta = train_batchGradDescent(X,y);
+  //arma::mat theta = train_normal(X,y);
 
   /*Gnuplot*/
   std::ofstream of_dat("OLSsin.dat");
@@ -84,11 +98,28 @@ arma::mat train_normal (arma::mat X, arma::mat y) {
   return theta;
 }
 
-arma::mat train_batchGradDescent(arma::mat X, arma::mat y, int numIter, double alpha) {
+arma::mat train_batchGradDescent(arma::mat X, arma::mat y) {
   arma::mat theta(X.n_cols,1);
   int m = X.n_rows;
   for (int i=0; i<numIter; i++) {
     theta -= (alpha/m) * (trans(X)*(X*theta - y));
+  }
+  return theta;
+}
+
+arma::mat ridge_train_normal(arma::mat X, arma::mat y) {
+  arma::mat theta(X.n_cols,1);
+  arma::mat I(X.n_cols,X.n_cols);
+  I.eye();
+  theta = inv(trans(X)*X + lambda*I)*(trans(X)*y);
+  return theta;
+}
+
+arma::mat ridge_train_batchGradDescent(arma::mat X, arma::mat y) {
+  arma::mat theta(X.n_cols,1);
+  theta.zeros();
+  for (int k=0;k<numIter;k++) {
+    theta = theta - (alpha/X.n_rows)*(trans(X)*(X*theta - y) + lambda*theta);
   }
   return theta;
 }
